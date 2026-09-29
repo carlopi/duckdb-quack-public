@@ -20,7 +20,6 @@ jobs:
     needs: duckdb-submodule-version
     uses: duckdb/extension-ci-tools/.github/workflows/_extension_distribution.yml@main
     with:
-      duckdb_version: ${{ needs.duckdb-submodule-version.outputs.version }}
       ci_tools_version: main
       extension_name: quack
       # Export QUACK_CLIENT_ID so quack_default_client_id_env.test (require-env gated) runs instead of skipping.
