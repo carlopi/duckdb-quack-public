@@ -340,7 +340,6 @@ static void QuackGenerateKeysFun(ClientContext &context, TableFunctionInput &dat
 
 TableFunction QuackGenerateKeysFunction::GetFunction() {
 	FunctionSignature signature;
-	signature.WithTypedKwargs("options",
-	                          [&](TypedKwargs &options) { options.Add("directory", LogicalType::VARCHAR); });
+	signature.WithTypedKwargs("options", [&](TypedKwargs &options) { options.Add("directory", LogicalType::VARCHAR); });
 	return TableFunction("quack_generate_keys", std::move(signature), QuackGenerateKeysFun, QuackGenerateKeysBind);
 }

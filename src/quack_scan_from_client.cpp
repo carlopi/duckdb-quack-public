@@ -248,8 +248,8 @@ TableFunction QuackScanFromClientFunction::GetFunction() {
 	signature.AddParameter("stream_id", LogicalType::VARCHAR)
 	    .AddParameter("prototype", LogicalType::ANY)
 	    .WithTypedKwargs("options", [&](TypedKwargs &options) { options.Add("ordered", LogicalType::BOOLEAN); });
-	TableFunction fun("scan_data_from_quack_client", std::move(signature), QuackScanFromClient,
-	                  QuackScanFromClientBind, QuackScanFromClientInitGlobal, QuackScanFromClientInitLocal);
+	TableFunction fun("scan_data_from_quack_client", std::move(signature), QuackScanFromClient, QuackScanFromClientBind,
+	                  QuackScanFromClientInitGlobal, QuackScanFromClientInitLocal);
 	fun.get_partition_data = QuackScanFromClientGetPartitionData;
 	return fun;
 }
