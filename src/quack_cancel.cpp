@@ -66,8 +66,11 @@ static void QuackCancelScan(ClientContext &, TableFunctionInput &input, DataChun
 }
 
 TableFunction QuackCancelFunction::GetFunction() {
-	return TableFunction("quack_cancel", {LogicalType::VARCHAR, LogicalType::VARCHAR}, QuackCancelScan,
-	                     QuackCancelBind);
+	return TableFunction("quack_cancel",
+	                     FunctionSignature()
+	                         .AddPositionalOnly("catalog", LogicalType::VARCHAR)
+	                         .AddPositionalOnly("connection_id", LogicalType::VARCHAR),
+	                     QuackCancelScan, QuackCancelBind);
 }
 
 } // namespace duckdb
