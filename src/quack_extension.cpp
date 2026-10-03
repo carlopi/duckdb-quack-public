@@ -129,12 +129,15 @@ static unique_ptr<FunctionData> QuackIdentifyBind(ClientContext &ctx, TableFunct
 }
 
 static TableFunction GetQuackIdentifyFunction() {
-	TableFunction fun("quack_identify", {}, QuackIdentifyFun, QuackIdentifyBind);
-	fun.named_parameters["name"] = LogicalType::VARCHAR;
-	fun.named_parameters["provider"] = LogicalType::VARCHAR;
-	fun.named_parameters["hostname"] = LogicalType::VARCHAR;
-	fun.named_parameters["region"] = LogicalType::VARCHAR;
-	fun.named_parameters["meta"] = LogicalType::VARCHAR; // JSON as string
+	FunctionSignature signature;
+	signature.WithTypedKwargs("options", [&](TypedKwargs &options) {
+		options.Add("name", LogicalType::VARCHAR)
+		    .Add("provider", LogicalType::VARCHAR)
+		    .Add("hostname", LogicalType::VARCHAR)
+		    .Add("region", LogicalType::VARCHAR)
+		    .Add("meta", LogicalType::VARCHAR);
+	}); // JSON as string
+	TableFunction fun("quack_identify", std::move(signature), QuackIdentifyFun, QuackIdentifyBind);
 	return fun;
 }
 

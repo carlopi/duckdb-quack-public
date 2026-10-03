@@ -244,10 +244,13 @@ static OperatorPartitionData QuackScanFromClientGetPartitionData(ClientContext &
 }
 
 TableFunction QuackScanFromClientFunction::GetFunction() {
-	TableFunction fun("scan_data_from_quack_client", {LogicalType::VARCHAR, LogicalType::ANY}, QuackScanFromClient,
-	                  QuackScanFromClientBind, QuackScanFromClientInitGlobal, QuackScanFromClientInitLocal);
+	FunctionSignature signature;
+	signature.AddParameter("stream_id", LogicalType::VARCHAR)
+	    .AddParameter("prototype", LogicalType::ANY)
+	    .WithTypedKwargs("options", [&](TypedKwargs &options) { options.Add("ordered", LogicalType::BOOLEAN); });
+	TableFunction fun("scan_data_from_quack_client", std::move(signature), QuackScanFromClient, QuackScanFromClientBind,
+	                  QuackScanFromClientInitGlobal, QuackScanFromClientInitLocal);
 	fun.get_partition_data = QuackScanFromClientGetPartitionData;
-	fun.named_parameters["ordered"] = LogicalType::BOOLEAN;
 	return fun;
 }
 

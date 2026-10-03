@@ -509,11 +509,11 @@ InsertionOrderPreservingMap<string> QuackScanToString(TableFunctionToStringInput
 }
 
 void QuackScanSerialize(Serializer &serializer, const optional_ptr<FunctionData> bind_data,
-                        const TableFunction &function) {
+                        const BoundTableFunction &function) {
 	throw NotImplementedException("Quack scans cannot be serialized (yet?)");
 }
 
-unique_ptr<FunctionData> QuackScanDeserialize(Deserializer &deserializer, TableFunction &function) {
+unique_ptr<FunctionData> QuackScanDeserialize(Deserializer &deserializer, BoundTableFunction &function) {
 	throw NotImplementedException("Quack scans cannot be deserialized (yet?)");
 }
 
@@ -537,13 +537,18 @@ BindInfo QuackScanGetBindInfo(const optional_ptr<FunctionData> bind_data_p) {
 }
 
 TableFunction QuackScanFunction::GetFunction() {
-	auto fun = TableFunction("quack_query", {LogicalType::VARCHAR, LogicalType::VARCHAR}, QuackScan, QuackScanBind,
-	                         QuackScanInitGlobal, QuackScanInitLocal);
-	fun.named_parameters["disable_ssl"] = LogicalType::BOOLEAN;
-	fun.named_parameters["ssl_fingerprint"] = LogicalType::VARCHAR;
-	fun.named_parameters["token"] = LogicalType::VARCHAR;
-	fun.named_parameters["client_id"] = LogicalType::VARCHAR;
-	fun.named_parameters["heartbeat_timeout"] = LogicalType::UBIGINT;
+	FunctionSignature signature;
+	signature.AddParameter("uri", LogicalType::VARCHAR)
+	    .AddParameter("query", LogicalType::VARCHAR)
+	    .WithTypedKwargs("options", [&](TypedKwargs &options) {
+		    options.Add("disable_ssl", LogicalType::BOOLEAN)
+		        .Add("ssl_fingerprint", LogicalType::VARCHAR)
+		        .Add("token", LogicalType::VARCHAR)
+		        .Add("client_id", LogicalType::VARCHAR)
+		        .Add("heartbeat_timeout", LogicalType::UBIGINT);
+	    });
+	auto fun = TableFunction("quack_query", std::move(signature), QuackScan, QuackScanBind, QuackScanInitGlobal,
+	                         QuackScanInitLocal);
 
 	fun.projection_pushdown = true;
 	fun.get_partition_data = QuackScanGetPartitionData;
@@ -558,8 +563,14 @@ TableFunction QuackScanFunction::GetFunction() {
 }
 
 TableFunction QuackScanByNameFunction::GetFunction() {
-	auto fun = TableFunction("quack_query_by_name", {LogicalType::VARCHAR, LogicalType::VARCHAR}, QuackScan,
-	                         QuackScanBindCatalogName, QuackScanInitGlobal, QuackScanInitLocal);
+	FunctionSignature signature;
+	signature.AddParameter("catalog", LogicalType::VARCHAR)
+	    .AddParameter("query", LogicalType::VARCHAR)
+	    .WithTypedKwargs("options", [&](TypedKwargs &options) {
+		    options.Add("use_transaction", LogicalType::BOOLEAN).Add("refresh_catalog", LogicalType::BOOLEAN);
+	    });
+	auto fun = TableFunction("quack_query_by_name", std::move(signature), QuackScan, QuackScanBindCatalogName,
+	                         QuackScanInitGlobal, QuackScanInitLocal);
 	fun.projection_pushdown = true;
 	fun.get_partition_data = QuackScanGetPartitionData;
 	fun.to_string = QuackScanToString;
@@ -567,8 +578,6 @@ TableFunction QuackScanByNameFunction::GetFunction() {
 	fun.deserialize = QuackScanDeserialize;
 	fun.get_virtual_columns = QuackGetVirtualColumns;
 	fun.get_bind_info = QuackScanGetBindInfo;
-	fun.named_parameters["use_transaction"] = LogicalType::BOOLEAN;
-	fun.named_parameters["refresh_catalog"] = LogicalType::BOOLEAN;
 	// fun.filter_pushdown = true;
 	// fun.filter_prune = true;
 	return fun;
